@@ -1,2 +1,2 @@
-mod huffman;
+mod algorithm;
 mod bitfile;
