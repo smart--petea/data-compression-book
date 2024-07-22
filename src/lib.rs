@@ -1,2 +1,2 @@
-mod algorithm;
-mod bitfile;
+pub mod algorithm;
+pub mod bitfile;

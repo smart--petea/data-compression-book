@@ -4,17 +4,6 @@ use crate::bitfile::{self, BitFile};
 use std::io::{Seek, Write, Read, Result};
 
 /*
-fn main() -> std::io::Result<()> {
-    let mut input = File::open("input.txt")?;
-    let mut output = BitFile::create("output.huffman")?;
-
-    CompressFile(input, output)?;
-
-    Ok(())
-}
-*/
-
-/*
  * The NODE structure is a node in the Huffman decoding tree. it has a 
  * count, which is its weight in the tree, and the node numbers of its 
  * two children. The saved_count member of the structure is only
