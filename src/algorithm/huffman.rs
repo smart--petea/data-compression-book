@@ -13,8 +13,8 @@ use std::io::{Seek, Write, Read, Result};
  */
 #[derive(Default, Copy, Clone, Debug)]
 struct TreeNode {
-    count: u8,
-    saved_count: u8,
+    count: u16,
+    saved_count: u16,
     child_0: usize,
     child_1: usize
 }
@@ -47,7 +47,7 @@ struct Code {
  * compressing the file is a simple matter. After the file is 
  * compressed, the storage is freed up, and the routine returns.
  */
-fn CompressFile(mut input: File, mut output: BitFile) -> std::io::Result<()> {
+pub fn CompressFile(mut input: File, mut output: BitFile) -> std::io::Result<()> {
     let mut counts = [0u16; 256];
     let mut nodes: [TreeNode; 514] = [TreeNode::default(); 514];
     let mut codes: [Option<Code>; 257] = [None; 257];
@@ -128,7 +128,7 @@ fn scale_counts(counts: &mut [u16; 256], nodes: &mut [TreeNode; 514]) {
     max_count = max_count + 1;
 
     for i in 0..256 {
-        nodes[i].count = (counts[i] / max_count) as u8;
+        nodes[i].count = counts[i] / max_count;
 
         if nodes[i].count == 0 && counts[i] != 0 {
             nodes[i].count = 1;
@@ -199,7 +199,7 @@ fn output_counts(output: &mut BitFile, nodes: &[TreeNode; 514]) -> std::io::Resu
         output.write(&regular_buffer)?;
 
         for i in first..=last {
-            regular_buffer[0] = nodes[i].count;
+            regular_buffer[0] = nodes[i].count as u8;
             output.write(&regular_buffer)?;
         }
 

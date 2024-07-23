@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use data_compression::algorithm;
+use data_compression::bitfile::BitFile;
 use std::io::Result;
 use std::fs::File;
 
@@ -31,16 +32,15 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::Huffman{action, input, output, debug} => {
+        Command::Huffman{action: Action::Compress, input, output, debug} => {
             let mut input = File::open(input)?;
-    /*
-    let mut output = BitFile::create("output.huffman")?;
+            let mut output = BitFile::create(output)?;
 
-    CompressFile(input, output)?;
+            algorithm::huffman::CompressFile(input, output)?;
+        }
 
-    Ok(())
-}
-*/
+        Command::Huffman{action: Action::Expand, input, output, debug} => {
+            //todo
         }
     }
 
