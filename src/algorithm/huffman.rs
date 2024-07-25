@@ -50,14 +50,16 @@ struct Code {
 pub fn CompressFile(mut input: File, mut output: BitFile) -> std::io::Result<()> {
     let mut counts = [0u16; 256];
     let mut nodes: [TreeNode; 514] = [TreeNode::default(); 514];
-    let mut codes: [Option<Code>; 257] = [None; 257];
+    let mut codes: [Code; 257] = [Code::default(); 257];
 
     count_bytes(&mut input, &mut counts)?;
     scale_counts(&mut counts, &mut nodes);
     output_counts(&mut output, &nodes)?;
 
     let root_node = build_tree(&mut nodes);
+    println!("convert_tree_to_code");
     convert_tree_to_code(&nodes, &mut codes, 0, 0, root_node);
+    println!("compress data");
     let args: Vec<String> = std::env::args().collect();
     let minus_d = String::from("-d");
     if let Some(minus_d) = args.get(1) {
@@ -277,15 +279,17 @@ fn build_tree(nodes: &mut [TreeNode; 514]) -> usize {
  * returns.
  */
 fn convert_tree_to_code(
-    nodes: &[TreeNode; 514],
-    codes: &mut [Option<Code>; 257],
+    nodes: &[TreeNode; 514], //todo type
+    codes: &mut [Code; 257], //todo type
     mut code_so_far: u8,
     mut bits: usize,
     node: usize
     ) {
 
     if node <= END_OF_STREAM {
-        codes[node] = Some(Code {code: code_so_far, code_bits : bits});
+        codes[node].code = code_so_far;
+        codes[node].code_bits = bits;
+        return;
     }
     code_so_far <<= 1;
     bits += 1;
@@ -303,7 +307,7 @@ fn convert_tree_to_code(
  * diagnostic information. By the time I get here, and the tree has 
  * been built, every active element will have 0 in its count.
  */
-fn print_model(nodes: &[TreeNode; 514], codes: &[Option<Code>; 257]) -> Result<()> {
+fn print_model(nodes: &[TreeNode; 514], codes: &[Code; 257]) -> Result<()> {
     for i in 0..514 {
         if nodes[i].saved_count != 0 {
             //todo put it in debug trait
@@ -316,9 +320,8 @@ fn print_model(nodes: &[TreeNode; 514], codes: &[Option<Code>; 257]) -> Result<(
             print_char(nodes[i].child_1);
 
             if i <= END_OF_STREAM {
-                if let Some(code) = codes[i] {
-                    bitfile::file_print_binary(&mut std::io::stdout(), code.code.into(), code.code_bits)?;
-                }
+                let code = codes[i];
+                bitfile::file_print_binary(&mut std::io::stdout(), code.code.into(), code.code_bits)?;
             }
 
             println!();
@@ -349,7 +352,7 @@ fn print_char(c: usize)
  * the data is a breeze. Each byte is read in, and its corresponding 
  * Huffman code is sent out.
  */
-fn compress_data(mut input: File, mut output: BitFile,  codes: [Option<Code>; 257]) -> Result<()> {
+fn compress_data(mut input: File, mut output: BitFile,  codes: [Code; 257]) -> Result<()> {
     let mut buffer = [0u8; 1];
 
     loop {
@@ -361,11 +364,11 @@ fn compress_data(mut input: File, mut output: BitFile,  codes: [Option<Code>; 25
             }
         }
 
-        let code = codes[buffer[0] as usize].unwrap();
+        let code = codes[buffer[0] as usize];
         output.output_bits(code.code as u32, code.code_bits)?;
     }
 
-    let code = codes[END_OF_STREAM].unwrap();
+    let code = codes[END_OF_STREAM];
     output.output_bits(code.code as u32, code.code_bits)?;
 
     Ok(())
